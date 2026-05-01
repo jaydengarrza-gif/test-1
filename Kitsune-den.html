@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kitsune</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><text y='90' font-size='90'>🦊</text></svg>">
+  <style>
+    html, body { height: 100%; min-height: 100%; }
+    body {
+      position: relative;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      color: #f0eee6;
+      background: radial-gradient(ellipse 70% 80% at 80% 10%, #27294a 50%, transparent 100%),
+                  radial-gradient(ellipse 60% 60% at 10% 95%, #201f38 48%, transparent 100%),
+                  linear-gradient(120deg, #191827 0%, #21203c 90%);
+      overflow: hidden;
+    }
+    /* -- Password modal, congrats popup, hard blocker styles -- */
+    .password-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: radial-gradient(ellipse 90% 80% at 60% 10%, #31191a40 35%, transparent 100%),
+                  radial-gradient(ellipse 68% 76% at 13% 97%, #16181d88 48%, transparent 100%),
+                  linear-gradient(115deg,#201626e9 60%, #241f32f7 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.18s;
+      backdrop-filter: blur(6px) saturate(1.08);
+      -webkit-backdrop-filter: blur(7px) saturate(1.13);
+      animation: modalFadeIn 1s cubic-bezier(.21,0,.18,1);
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .password-modal-content {
+      position: relative;
+      background: linear-gradient(129deg,#251c30e6 83%, #312a35e3 100%);
+      border-radius: 32px;
+      box-shadow:
+        0 0 0 8px #fca31133,
+        0 0 42px 0 #813c1190,
+        0 11px 48px 16px #38111a66,
+        0 3px 24px #9250ff18;
+      padding: 2.7rem 1.35rem 2rem 1.35rem;
+      width: 95vw;
+      max-width: 370px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 2;
+    }
+    .password-modal-content::before {
+      content: '';
+      position: absolute;
+      inset: -16px -11px -22px -11px;
+      z-index: 0;
+      border-radius: 40px;
+      background:
+        radial-gradient(ellipse 40% 40% at 42% 10%, #fca31122 0, transparent 80%),
+        radial-gradient(ellipse 60% 74% at 80% 78%, #50dafb33 0, transparent 80%),
+        radial-gradient(ellipse 30% 30% at 18% 90%, #ffb94024 0, transparent 70%);
+      filter: blur(10px);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .modal-fox {
+      font-size: 2.6rem;
+      margin-bottom: 7px;
+      text-shadow:
+        0 1px 20px #fca3117c,
+        0 0 2px #fff,
+        0 2px 48px #fca311;
+      display: block;
+      z-index: 2;
+      pointer-events: none;
+      filter: drop-shadow(0 0 11px #fa610835);
+      animation: foxPulse 2.8s infinite alternate cubic-bezier(.2,0,.6,1);
+    }
+    @keyframes foxPulse {
+      0% { filter: drop-shadow(0 0 11px #fa610835);}
+      70% { filter: drop-shadow(0 0 19px #faaf3165);}
+      100% { filter: drop-shadow(0 0 6px #fa610830);}
+    }
+    .password-modal-content h2 {
+      color: #ffa014;
+      font-size: 1.42rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      margin: 0 0 1.2em 0;
+      text-shadow:
+        0 2px 18px #fca311b8,
+        0 1px 44px #15121b44,
+        0 1px 0 #e59a0b40;
+      background: linear-gradient(92deg, #ffe7be 21%, #fca311 44%, #e86e18 83%, #ff4600 98%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      z-index: 2;
+      position: relative;
+    }
+    .password-modal input[type="password"] {
+      padding: 1em 1.25em;
+      border-radius: 24px;
+      border: 2.2px solid #fca311cc;
+      font-size: 1.19rem;
+      margin: 0.3em 0 1.1em 0;
+      background: linear-gradient(95deg, #271e31 80%, #3a221133 100%);
+      color: #ffeecc;
+      width: 93%;
+      box-shadow: 0 2px 13px #fd7e1422, 0 1.5px 6px #52151514;
+      font-family: inherit;
+      font-weight: 420;
+      letter-spacing: 0.04em;
+      outline: none;
+      z-index: 2;
+      backdrop-filter: blur(2.1px);
+      -webkit-backdrop-filter: blur(2.3px);
+      transition: border-color 0.23s, background 0.18s, box-shadow 0.23s;
+    }
+    .password-modal input[type="password"]:focus {
+      border-color: #ffae3c;
+      background: #412f19d9;
+      box-shadow: 0 2px 22px 3px #fd7e1440;
+    }
+    .password-modal button {
+      padding: 1em 2.1em;
+      border-radius: 26px;
+      border: none;
+      background: linear-gradient(94deg,#fca311 61%,#ff4600 100%);
+      color: #372d1d;
+      font-weight: 690;
+      font-size: 1.15rem;
+      letter-spacing: 0.014em;
+      margin-top: 6px;
+      margin-bottom: 4px;
+      box-shadow: 0 4px 24px #fca31138, 0 3px 13px #0b0b0b11;
+      transition: background 0.18s, color 0.13s, transform 0.08s, box-shadow 0.19s;
+      cursor: pointer;
+      font-family: inherit;
+      z-index: 2;
+      outline: none;
+      border: 2px solid #ffae3c55;
+      user-select: none;
+    }
+    .password-modal button:hover,
+    .password-modal button:focus {
+      background: linear-gradient(97deg, #ff9300 25%, #ff4600 98%);
+      color: #201a11;
+      box-shadow: 0 11px 38px -4px #ff79007a;
+      border: 2px solid #fa951a90;
+      transform: scale(1.04) translateY(-2px);
+    }
+    .pw-message {
+      color: #ff6666;
+      min-height: 1.15em;
+      margin: 0.8em 0 0 0;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+      text-align: center;
+      text-shadow: 0 1px 4px #1a1215be;
+      z-index: 2;
+      position: relative;
+      font-family: 'Segoe UI',Arial,sans-serif;
+      opacity: 1;
+      transition: opacity .1s;
+    }
+    .input-error {
+      border-color: #d94848 !important;
+      background: linear-gradient(95deg, #3a141a 80%, #6b221140 100%) !important;
+      animation: shake 0.3s cubic-bezier(.58,0,.39,1.6);
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+      75% { transform: translateX(-4px);}
+      100% { transform: translateX(0);}
+    }
+    .button-error {
+      background: linear-gradient(97deg, #e6341f 35%, #ad1900 100%) !important;
+      color: #fdeded !important;
+    }
+    /* Congratulatory pop-up */
+    .congrats-modal {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      background: rgba(32,20,34,0.72);
+      animation: fadeinCongrats 0.3s;
+    }
+    @keyframes fadeinCongrats { from { opacity: 0; } to { opacity: 1; } }
+    .congrats-popup {
+      background: linear-gradient(123deg,#270013e0 85%,#2a1a37e0 100%);
+      box-shadow: 0 0 0 8px #fca3112a,
+                  0 0 38px 7px #ffb65b21,
+                  0 8px 44px 9px #9250ff3b;
+      border-radius: 33px;
+      padding: 2.0rem 2.1rem 1.7rem 2.1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 240px;
+      max-width: 92vw;
+      position: relative;
+    }
+    .congrats-fox {
+      font-size: 3.2rem;
+      text-shadow: 0 6px 32px #fd903b34, 0 0 6px #ffd267;
+      animation: foxPulse 2.1s infinite alternate cubic-bezier(.65,.17,.48,1.11);
+      margin-bottom: 11px;
+    }
+    .congrats-title {
+      font-size: 1.33rem;
+      font-weight: 770;
+      background: linear-gradient(92deg, #ffe7be 12%, #fca311 44%, #e86e18 83%, #ff4600 98%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.79em;
+      letter-spacing: 0.01em;
+      text-align: center;
+      text-shadow: 0 2px 19px #fca311af,0 2px 44px #231c2c93;
+    }
+    .congrats-msg {
+      margin: 0 0 1.3em 0;
+      color: #ffb230;
+      font-size: 1.07rem;
+      text-align: center;
+      text-shadow: 0 1px 8px #19121bbc;
+    }
+    .congrats-close-btn {
+      padding: 0.8em 1.8em;
+      border-radius: 22px;
+      border: none;
+      background: linear-gradient(94deg,#fca311 61%,#ff4600 100%);
+      color: #332100;
+      font-weight: 700;
+      font-size: 1.09rem;
+      letter-spacing: 0.014em;
+      margin-top: 0.5em;
+      box-shadow: 0 4px 19px #fca31122;
+      transition: background 0.19s, color 0.13s, transform 0.08s, box-shadow 0.19s;
+      cursor: pointer;
+      font-family: inherit;
+      outline: none;
+      user-select: none;
+      opacity: 0.96;
+    }
+    .congrats-close-btn:hover {
+      background: linear-gradient(97deg, #ff9300 37%, #ff4600 98%);
+      color: #211a11;
+      transform: scale(1.03);
+      opacity: 1;
+    }
+    .disable-blur {
+      filter: blur(2.1px) brightness(0.65) grayscale(0.25);
+      pointer-events: none;
+      user-select: none;
+    }
+    .lockout-cooldown {
+      color: #ffd278;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      margin-top: 0.7em;
+      margin-bottom: 0.2em;
+      font-size: 1.09em;
+      text-align: center;
+      text-shadow: 0 4px 19px #fca31118, 0 2px 10px #333;
+      min-height: 2em;
+      width: 98%;
+      opacity: 1;
+      transition: opacity 0.12s;
+    }
+    .lockout-blocked {
+      color: #ffa2a2;
+      background: #26141f7d;
+      border-radius: 18px;
+      padding: 1.1em 1em 0.6em 1em;
+      font-size: 1.11em;
+      margin-bottom: 1em;
+      margin-top: 1em;
+      width: 96%;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-align: center;
+      box-shadow: 0 1px 24px #81091a18;
+    }
+    .hard-blocker {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      background: linear-gradient(135deg,#180a0d 40%,#2e132a 100%);
+      color: #fffbe7;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: inherit;
+      font-size: 1.22rem;
+      font-weight: 570;
+      letter-spacing: 0.02em;
+      animation: fadeinCongrats 0.5s;
+      text-align: center;
+      padding: 3vw;
+      transition: opacity .3s;
+    }
+    .hard-blocker h1 {
+      font-size: 2.1em;
+      color: #ff7e3f;
+      margin-bottom: 0.7em;
+      text-shadow: 0 2px 12px #fca311cc,0 4px 44px #ff460066;
+    }
+    .hard-blocker .hard-emoji {
+      font-size: 3em;
+      margin-bottom: 0.2em;
+      filter: drop-shadow(0 0 32px #ff790055);
+      display: block;
+    }
+    .hard-blocker .hard-msg {
+      background: linear-gradient(87deg,#281212 40%,#1d1121 100%);
+      padding: 1.2em 1.1em 1.1em 1.1em;
+      border-radius: 19px;
+      color: #ffd7b3;
+      box-shadow: 0 2px 28px #ee6d227c;
+      margin-bottom: 1.2em;
+    }
+    .hard-blocker .timer {
+      font-size: 1.14em;
+      font-weight: bold;
+      color: #ffd446;
+      text-shadow: 0 2px 15px #ffb65b44;
+    }
+    @media (max-width: 480px) {
+      .password-modal-content,
+      .congrats-popup { padding: 1.2rem 0.6rem 1.0rem 0.6rem; max-width: 99vw; }
+      .congrats-fox { font-size: 2rem;}
+      .password-modal input[type="password"]{ font-size: 1rem; width: 99%; }
+      .password-modal button,
+      .congrats-close-btn { width: 100%; }
+      .modal-fox { font-size: 1.8rem; }
+    }
+    /* -- Kitsune Den themed styles continue (container, orbs, etc.) -- */
+    .orbs-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .orb { position: absolute; border-radius: 999px;
+      opacity: 0.18; filter: blur(30px); mix-blend-mode: screen;}
+    .container {
+      display: flex; flex-direction: column; align-items: center;
+      width: 100%; max-width: 430px; margin: 0 auto;
+      padding: 2.9rem 1.4rem 2.2rem 1.4rem; position: relative; z-index: 2;
+      background: rgba(38, 32, 50, 0.93); border-radius: 35px;
+      box-shadow: 0 0 0 7px #fca31132, 0 0 0 15px #9250ff1a,
+      0 19px 80px 22px #47255c88, 0 9px 44px 0 rgba(52, 38, 110, 0.50);
+      backdrop-filter: blur(19px) saturate(1.22);
+      transition: box-shadow 0.26s, background 0.14s; overflow: visible;
+    }
+    .container::before {
+      content: ''; pointer-events: none; z-index: 1; position: absolute;
+      inset: -11px; border-radius: 42px;
+      background: radial-gradient(circle at 70% 7%,rgba(252,163,17,0.17) 0,transparent 73%),
+        radial-gradient(circle at 13% 97%,rgba(80,218,251,0.12) 0,transparent 55%),
+        radial-gradient(circle at 56% 85%,rgba(146,78,255,0.12) 0,transparent 62%);
+      filter: blur(14px); opacity: 0.55; display: block; transition: opacity 0.18s;
+    }
+    .foxfire-glow {
+      position: absolute; left: 50%; top: 52%;
+      transform: translate(-50%, -50%); width: 80%; height: 60px;
+      border-radius: 80px;
+      background: radial-gradient(ellipse 53% 56% at 51% 62%, #ffae3c90 10%, #fca31144 43%, transparent 100%);
+      filter: blur(16px); opacity: 0.80; z-index: 4;
+      animation: foxfire-pulse 3.3s infinite alternate cubic-bezier(.77,0,.29,1);
+      pointer-events: none;
+    }
+    @keyframes foxfire-pulse {
+      0%   { opacity: 0.74; transform: translate(-50%,-50%) scale(1.0);}
+      70%  { opacity: 0.90; transform: translate(-50%,-51%) scale(1.16);}
+      100% { opacity: 0.54; transform: translate(-50%,-48%) scale(1.23);}
+    }
+    .fox-aura-wrapper {
+      position: relative; margin-bottom: 0.78em; display: flex;
+      align-items: center; justify-content: center;
+      height: 120px; width: 120px; z-index: 10;
+    }
+    .kitsune-aura {
+      position: absolute; left: 50%; top: 56%; transform: translate(-50%, -47%);
+      width: 110px; height: 78px; border-radius: 60% 46% 55% 68% / 70% 80% 60% 65%;
+      background:
+        radial-gradient(ellipse 62% 72% at 52% 60%, rgba(252,163,17,0.25) 0%, transparent 100%),
+        radial-gradient(ellipse 66% 76% at 44% 78%, rgba(80,218,251,0.16) 0%, transparent 100%),
+        radial-gradient(ellipse 30% 50% at 54% 34%, rgba(255,240,211,0.14) 0%, transparent 100%),
+        radial-gradient(ellipse 60% 55% at 65% 55%, rgba(255,80,28,0.15) 0%, transparent 100%),
+        radial-gradient(ellipse 70% 60% at 45% 38%, rgba(146,78,255,0.09) 0%, transparent 100%);
+      box-shadow: 0 0 32px 10px rgba(252,163,17,0.11), 0 0 80px 18px #fca31118;
+      opacity: 0.68; filter: blur(2.2px); pointer-events: none;
+    }
+    .fox-emoji {
+      font-size: 3.6rem; z-index: 3; position: relative; display: block;
+      filter: drop-shadow(0 5px 24px #ffb25d76); will-change: transform, filter;
+      user-select: none; transition: filter 0.17s;
+    }
+    .aura-spark {
+      position: absolute; border-radius: 50%; pointer-events: none; opacity: 0.60;
+      background: radial-gradient(ellipse at 52% 52%, #ffe5be 20%, #fca311 60%, transparent 85%);
+      filter: blur(1.5px); width: 19px; height: 19px; left: 75%; top: 42%;
+      animation: spark-bob 2.9s infinite alternate cubic-bezier(.57,-0.29,.49,1.45); z-index: 8;
+    }
+    @keyframes spark-bob {
+      0% { transform: translateY(0) scale(1);}
+      100% { transform: translateY(-19px) scale(1.18);}
+    }
+    h1 {
+      margin: 0 0 2.45rem 0; font-size: 2.37rem; color: #ffa014; font-weight: 960;
+      letter-spacing: -0.7px;
+      text-shadow: 0 2px 18px #fca311c2, 0 4px 66px #15121b44, 0 1px 0 #e59a0b55;
+      text-align: center; z-index: 3;
+      font-family: 'Segoe UI Semibold','Segoe UI',Arial,sans-serif;
+      background: linear-gradient(92deg, #ffe7be 12%, #fca311 44%, #e86e18 83%, #ff4600 98%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    form { display: flex; width: 100%; gap: 0.7rem; position: relative; z-index: 7;
+      align-items: center; justify-content: center;
+    }
+    .search-bar {
+      flex: 1 1 0; padding: 0.93rem 1.45rem; border: 2.1px solid #fca311cc;
+      border-radius: 31px; font-size: 1.15rem; outline: none;
+      transition: border-color 0.23s, background 0.18s, box-shadow 0.23s;
+      background: linear-gradient(100deg, #2a202a 74%, #3a2e2e 100%);
+      color: #ffeecc; box-shadow: 0 2px 22px 0 #fd7e1440, 0 1.5px 5px #32151712;
+      font-family: inherit; font-weight: 420; letter-spacing: 0.05em;
+      backdrop-filter: blur(2.8px) saturate(1.01); z-index: 9;
+    }
+    .search-bar:focus { border-color: #ffae3c; background: #412f19ee;
+      box-shadow: 0 2px 20px 6px #fd7e1443;}
+    button {
+      padding: 0.93rem 1.44rem; border: none; border-radius: 30px;
+      background: linear-gradient(97deg, #fca311 5%, #ff4600 94%);
+      color: #332100; font-size: 1.12rem; font-weight: 650; cursor: pointer;
+      box-shadow: 0 2.5px 8.5px 0 #fca31124, 0 3px 13px #0b0b0b11;
+      transition: background 0.19s, transform 0.10s, box-shadow 0.21s; outline: none;
+      font-family: inherit; letter-spacing: 0.01em; z-index: 9;
+    }
+    button:hover,button:focus{
+      background: linear-gradient(95deg, #fb8500 35%, #ff7900 100%);
+      transform: translateY(-2px) scale(1.07);
+      color: #181a1b;
+      box-shadow: 0 11px 38px -4px #ff79009e;
+    }
+    @media (max-width: 480px) {
+      .container { max-width: 98vw; }
+      form { flex-direction: column; gap: 0.88rem; }
+      button { width: 100%; }
+      .fox-aura-wrapper { height: 80px; width: 90px;}
+      .kitsune-aura { width: 80px; height: 60px;}
+      .fox-emoji { font-size: 2.35rem;}
+    }
+    .message {
+      margin-top: 2.2rem;
+      color: #ffb65b;
+      font-size: 1.09rem;
+      min-height: 1.2em;
+      letter-spacing: 0.014em;
+      text-align: center;
+      word-break: break-word;
+      text-shadow: 0 1px 8px #1a1215be;
+      font-family: 'Segoe UI',Arial,sans-serif;
+      z-index: 4;
+    }
+    ::placeholder { color: #e6c596; opacity: 1;}
+  </style>
+</head>
+<body>
+  <!-- Hard block overlay -->
+  <div id="hardBlocker" class="hard-blocker" style="display:none;">
+    <span class="hard-emoji">🦊❌</span>
+    <h1>Locked Out!</h1>
+    <div class="hard-msg">
+      The fox spirits have closed the Den for a full day.<br>
+      Please try again after:<br>
+      <span class="timer" id="hardBlockTimer"></span>
+    </div>
+  </div>
+  <!-- Password Modal Overlay (kitsune style) -->
+  <div class="password-modal" id="passwordModal">
+    <div class="password-modal-content" id="passContent">
+      <span class="modal-fox">🦊</span>
+      <h2>Fox Den Gate</h2>
+      <form id="passwordForm" autocomplete="off">
+        <input type="password" id="passwordField" placeholder="Spirit password..." required autofocus>
+        <button type="submit">Enter Den</button>
+      </form>
+      <div class="pw-message" id="pwMessage"></div>
+      <div id="lockoutMsg" class="lockout-cooldown"></div>
+    </div>
+  </div>
+  <!-- Congratulatory Pop-up -->
+  <div class="congrats-modal" id="congratsModal" style="display:none;">
+    <div class="congrats-popup">
+      <span class="congrats-fox">🦊✨</span>
+      <div class="congrats-title">Congratulations, Spirit Friend!</div>
+      <div class="congrats-msg">You have entered the Den. The fox spirits welcome you.<br>✨</div>
+      <button class="congrats-close-btn" id="congratsClose">Continue</button>
+    </div>
+  </div>
+  <!-- Magical orbs background -->
+  <div class="orbs-bg"></div>
+  <div class="container" id="mainContent">
+    <div class="fox-aura-wrapper">
+      <span class="kitsune-aura"></span>
+      <span class="fox-emoji" aria-hidden="true">🦊</span>
+      <span class="aura-spark"></span>
+    </div>
+    <h1>The Fox's Den</h1>
+    <div class="foxfire-glow"></div>
+    <form id="searchForm" autocomplete="off">
+      <input type="text" id="searchInput" class="search-bar" placeholder="Type to search..." required autofocus>
+      <button type="submit">Enter</button>
+    </form>
+    <div class="message" id="message"></div>
+  </div>
+  <script>
+    (function passwordModalLogic() {
+      const PASSWORD = "sikora";
+      const FINAL_STAGE_INDEX = 2;
+      const MAX_ATTEMPTS_BEFORE_STAGE = 3;
+      const modal = document.getElementById('passwordModal');
+      const form = document.getElementById('passwordForm');
+      const field = document.getElementById('passwordField');
+      const msg = document.getElementById('pwMessage');
+      const lockoutMsg = document.getElementById('lockoutMsg');
+      const passContent = document.getElementById('passContent');
+      const congrats = document.getElementById('congratsModal');
+      const congratsBtn = document.getElementById('congratsClose');
+      const mainContent = document.getElementById('mainContent');
+      const hardBlocker = document.getElementById('hardBlocker');
+      const hardBlockTimer = document.getElementById('hardBlockTimer');
+      const lockoutDATA = {
+        attemptSet: [
+          { limit: 3, waitMs: 60 * 1000 },
+          { limit: 3, waitMs: 5 * 60 * 1000 },
+          { limit: 3, waitMs: 24 * 60 * 60 * 1000 }
+        ],
+        prefix: 'kitsune_pwlock_v2'
+      };
+      function saveObj(obj) {
+        localStorage.setItem(lockoutDATA.prefix, JSON.stringify(obj));
+      }
+      function getObj() {
+        let v = localStorage.getItem(lockoutDATA.prefix);
+        return v ? JSON.parse(v) : { fails: 0, stage: 0, time: 0 };
+      }
+      function resetLockout(){ localStorage.removeItem(lockoutDATA.prefix); localStorage.removeItem('kitsune_hardblock_fails');}
+      function now() { return Date.now(); }
+      function setFieldEnabled(enabled) {
+        field.disabled = !enabled;
+        form.querySelector("button").disabled = !enabled;
+        if(enabled) {
+          mainContent.classList.remove("disable-blur");
+          field.classList.remove("input-error");
+        }
+        else {
+          mainContent.classList.add("disable-blur");
+        }
+      }
+      function formatTime(ms) {
+        let total = Math.ceil(ms / 1000), h = 0, m = 0, s = 0, txt = "";
+        if (total >= 3600) { h = Math.floor(total / 3600); total = total % 3600; }
+        m = Math.floor(total / 60); s = total % 60;
+        txt = (h ? h + ":" : "") + (m < 10 && h ? "0" : "") + m + ":" + ("0" + s).slice(-2);
+        return txt;
+      }
+      function hardBlockUI(targetTime) {
+        modal.style.display = 'none';
+        congrats.style.display = 'none';
+        hardBlocker.style.display = 'flex';
+        function tick() {
+          let remain = targetTime - now();
+          if (remain > 0) {
+            hardBlockTimer.textContent = formatTime(remain);
+            setTimeout(tick, 900);
+            try { window.open('', '_self', ''); window.close(); } catch(e){}
+          } else {
+            hardBlocker.style.display='none';
+            resetLockout();
+            location.reload();
+          }
+        }
+        tick();
+        try { window.open('', '_self', ''); window.close(); } catch(e){}
+      }
+
+      (function checkHardBlockOnLoad(){
+        let obj = getObj();
+        if (obj.time && obj.stage >= lockoutDATA.attemptSet.length) {
+          let target = obj.time + lockoutDATA.attemptSet.slice(-1)[0].waitMs;
+          if(now() < target) {
+            hardBlockUI(target);
+            setTimeout(function() {
+              try { window.open('', '_self', ''); window.close(); } catch(e){}
+            },80);
+          }
+        }
+      })();
+
+      function applyLockout(fails, stage, time, blockReason) {
+        setFieldEnabled(false);
+        if (stage >= lockoutDATA.attemptSet.length) {
+          let target = time + lockoutDATA.attemptSet.slice(-1)[0].waitMs;
+          hardBlockUI(target);
+          return;
+        }
+        let cooldownMs = lockoutDATA.attemptSet[stage].waitMs;
+        let target = time + cooldownMs;
+        function tick() {
+          let remain = target - now();
+          if(remain <= 0) {
+            lockoutMsg.textContent = "";
+            msg.textContent = "";
+            saveObj({ fails: 0, stage: stage+1, time: 0 });
+            setFieldEnabled(true);
+            field.value = "";
+            field.focus();
+          } else {
+            lockoutMsg.textContent = `Fox spirits say: Wait ${formatTime(remain)} before another try.` + (blockReason ? "<br>" + blockReason : "");
+            setTimeout(tick, 800);
+          }
+        } tick();
+      }
+      let obj = getObj();
+      let locked = false;
+      if (obj.time && obj.stage < lockoutDATA.attemptSet.length) {
+        let target = obj.time + lockoutDATA.attemptSet[obj.stage].waitMs;
+        if (now() < target) {
+          applyLockout(obj.fails, obj.stage, obj.time);
+          locked = true;
+        }
+      }
+      if(!hardBlocker.style.display || hardBlocker.style.display==='none'){
+        modal.style.display = 'flex';
+        setTimeout(()=>field.focus(), 120);
+        msg.textContent = '';
+      }
+      function showCongrats() {
+        congrats.style.display = "flex";
+        mainContent.classList.add("disable-blur");
+        setTimeout(()=>congratsBtn.focus(), 80);
+      }
+      congratsBtn.onclick = function() {
+        congrats.style.display = "none";
+        mainContent.classList.remove("disable-blur");
+      };
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        if(field.disabled) return false;
+        let o = getObj();
+        if (o.time && o.stage < lockoutDATA.attemptSet.length) {
+          let target = o.time + lockoutDATA.attemptSet[o.stage].waitMs;
+          if(now() < target) { return false;}
+        }
+        if (o.time && o.stage >= lockoutDATA.attemptSet.length) {
+          let target = o.time + lockoutDATA.attemptSet.slice(-1)[0].waitMs;
+          if(now() < target) {
+            hardBlockUI(target);
+            try { window.open('', '_self', ''); window.close(); } catch(e){}
+            return false;
+          }
+        }
+        if(field.value === PASSWORD) {
+          resetLockout();
+          msg.textContent = "";
+          field.value = "";
+          modal.style.display = 'none';
+          showCongrats();
+        } else {
+          let nFail = (o.fails || 0) + 1;
+          let nextStage = o.stage || 0;
+          field.classList.add("input-error");
+          form.querySelector("button").classList.add("button-error");
+          passContent.classList.add("input-error");
+          setTimeout(()=>{
+            field.classList.remove("input-error");
+            form.querySelector("button").classList.remove("button-error");
+            passContent.classList.remove("input-error");
+          }, 600);
+          if(nextStage < lockoutDATA.attemptSet.length){
+            let limit = lockoutDATA.attemptSet[nextStage].limit;
+            if(nFail >= limit) {
+              let time = now();
+              o = { fails: 0, stage: nextStage+1, time: time };
+              saveObj(o);
+              if (nextStage+1 < lockoutDATA.attemptSet.length) {
+                msg.textContent = '';
+                applyLockout(0, nextStage, time, "Magic has grown suspicious.");
+              } else {
+                applyLockout(0, nextStage+1, time, "");
+              }
+              field.value = '';
+              return false;
+            } else {
+              msg.textContent = 'Incorrect password. Fox magic denies you entry.';
+              saveObj({ fails: nFail, stage: nextStage, time: 0 });
+              field.value = '';
+              return false;
+            }
+          } else {
+            let hardFails = Number(localStorage.getItem('kitsune_hardblock_fails') || 0) + 1;
+            localStorage.setItem('kitsune_hardblock_fails', hardFails);
+            field.value = '';
+            msg.textContent = 'Incorrect password. Fox magic becomes hostile!';
+            if(hardFails >= MAX_ATTEMPTS_BEFORE_STAGE){
+              let nowMillis = now();
+              saveObj({ fails: 0, stage: lockoutDATA.attemptSet.length, time: nowMillis });
+              localStorage.setItem('kitsune_hardblock_fails', 0);
+              hardBlockUI(nowMillis + lockoutDATA.attemptSet[FINAL_STAGE_INDEX].waitMs);
+              try { window.open('', '_self', ''); window.close(); }catch(e){}
+              return false;
+            } else {
+              try { window.open('', '_self', ''); window.close();}catch(e){}
+              msg.textContent = 'You have angered the fox spirits! The tab will close now.';
+              setTimeout(function(){
+                hardBlockUI(now() + lockoutDATA.attemptSet[FINAL_STAGE_INDEX].waitMs);
+              }, 1300);
+              return false;
+            }
+          }
+        }
+      });
+      congratsBtn.addEventListener("click",()=>{
+        congrats.style.display="none";
+        mainContent.classList.remove("disable-blur");
+      });
+    })();
+    (function animateOrbs() {
+      const colors = [
+        "rgba(252,163,17,1)",
+        "rgba(80,218,251,1)",
+        "rgba(255,94,0,1)",
+        "rgba(151,71,255,1)",
+        "rgba(135,245,197,1)"
+      ];
+      const orbsBg = document.querySelector('.orbs-bg');
+      const n = 7;
+      let orbs = [];
+      for (let i=0; i<n; ++i) {
+        const orb = document.createElement('div');
+        orb.classList.add('orb');
+        const color = colors[i % colors.length];
+        orb.style.background = `radial-gradient(circle at 50% 40%, ${color} 0%, transparent 75%)`;
+        const size = 90 + Math.random()*75;
+        orb.style.width = size+"px";
+        orb.style.height = size+"px";
+        orb.dataset.x = 20 + Math.random()*60;
+        orb.dataset.y = 8 + Math.random()*82;
+        orbsBg.appendChild(orb);
+        orbs.push(orb);
+      }
+      function animate() {
+        const t = performance.now()/1100;
+        orbs.forEach((orb, idx) => {
+          const xpos = Number(orb.dataset.x) + Math.sin(t/2 + idx)*2.2;
+          const ypos = Number(orb.dataset.y) + Math.sin(t + idx*2)*3.5;
+          orb.style.left = xpos+"vw";
+          orb.style.top = ypos+"vh";
+          orb.style.opacity = 0.09 + 0.13*Math.abs(Math.sin(t/1.9 + idx));
+        });
+        requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+    (function animateAura() {
+      const aura = document.querySelector('.kitsune-aura');
+      let k = 0;
+      function step() {
+        k += 0.031;
+        const sx = 1 + Math.sin(k*0.9)*0.07;
+        const sy = 1 + Math.cos(k*0.95)*0.05;
+        const rot = Math.sin(k*0.7 + 1.3) * 6;
+        aura.style.transform =
+          `translate(-50%, -47%) scale(${sx.toFixed(3)},${sy.toFixed(3)}) rotate(${rot}deg)`;
+        aura.style.opacity = 0.52 + 0.16*Math.abs(Math.cos(k*0.8));
+        requestAnimationFrame(step);
+      }
+      step();
+    })();
+    (function bobFox() {
+      const fox = document.querySelector('.fox-emoji');
+      const amplitude = 14;
+      const period = 5000;
+      function animateFox() {
+        const now = performance.now();
+        const dy = Math.sin((now % period) / period * 2 * Math.PI) * amplitude;
+        fox.style.transform = `translateY(${dy}px)`;
+        requestAnimationFrame(animateFox);
+      }
+      animateFox();
+    })();
+    const form = document.getElementById('searchForm');
+    const input = document.getElementById('searchInput');
+    const message = document.getElementById('message');
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const value = input.value.trim();
+      if(value) {
+        message.textContent = `You searched for: "${value}"`;
+      } else {
+        message.textContent = "";
+      }
+    });
+  </script>
+</body>
+</html>
